@@ -1,6 +1,6 @@
-const BASE_URL =
-  "https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies";
 
+
+const BASE_URL = "https://api.exchangerate-api.com/v4/latest";
 const dropdowns = document.querySelectorAll(".dropdown select");
 const btn = document.querySelector("form button");
 const fromCurr = document.querySelector(".from select");
@@ -8,7 +8,7 @@ const toCurr = document.querySelector(".to select");
 const msg = document.querySelector(".msg");
 
 for (let select of dropdowns) {
-  for (currCode in countryList) {
+  for (let currCode in countryList) {
     let newOption = document.createElement("option");
     newOption.innerText = currCode;
     newOption.value = currCode;
@@ -32,13 +32,34 @@ const updateExchangeRate = async () => {
     amtVal = 1;
     amount.value = "1";
   }
-  const URL = `${BASE_URL}/${fromCurr.value.toLowerCase()}/${toCurr.value.toLowerCase()}.json`;
-  let response = await fetch(URL);
-  let data = await response.json();
-  let rate = data[toCurr.value.toLowerCase()];
 
-  let finalAmount = amtVal * rate;
-  msg.innerText = `${amtVal} ${fromCurr.value} = ${finalAmount} ${toCurr.value}`;
+  if (fromCurr.value === toCurr.value) {
+    msg.innerText =`${amtVal} ${fromCurr.value} = ${amtVal} ${toCurr.value}`;
+    return;
+  }
+
+  const URL =`${BASE_URL}/${fromCurr.value}`;
+
+  try {
+    let response = await fetch(URL);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    let data = await response.json();
+    let rate = data.rates[toCurr.value];
+    
+    if (rate) {
+      let finalAmount = amtVal * rate;
+      msg.innerText = `${amtVal} ${fromCurr.value} = ${finalAmount.toFixed(2)} ${toCurr.value}`;
+    } else {
+      msg.innerText = "Exchange rate not found!";
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    msg.innerText = "Failed to fetch exchange rate.";
+
+  }
 };
 
 const updateFlag = (element) => {
